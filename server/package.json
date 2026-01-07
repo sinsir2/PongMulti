@@ -1,0 +1,16 @@
+{
+  "name": "pong-multi-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for multiplayer Pong game",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
