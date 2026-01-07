@@ -24,7 +24,7 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 ```sh
 npm install
 ```
-
+s
 ### Compile and Hot-Reload for Development
 
 ```sh
@@ -36,3 +36,6 @@ npm run dev
 ```sh
 npm run build
 ```
+
+
+gaygar
