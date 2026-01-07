@@ -23,6 +23,12 @@ wss.on('connection', (ws) => {
       const msg = JSON.parse(data.toString());
 
       if (msg.type === 'join') {
+        // If game ended, reset to waiting state for new game
+        if (gameState.gameStatus === 'ENDED') {
+          gameState.resetGame();
+          console.log('Game was ended, reset to WAITING for new players');
+        }
+
         // Assign to left/right side based on player count
         const side = gameState.assignSide();
         const player = gameState.addPlayer(playerId, msg.name, msg.color, side, ws);
@@ -41,12 +47,14 @@ wss.on('connection', (ws) => {
           type: 'playerJoined',
           player: player.serialize()
         }, playerId);
+      }
 
-        // Check if game can start (min 2 players, one per side)
+      if (msg.type === 'startGame') {
+        // Verify game can start (min 2 players, one per side)
         if (gameState.canStart() && gameState.gameStatus === 'WAITING') {
           gameState.startGame();
           broadcast({ type: 'gameStarted' });
-          console.log('Game started!');
+          console.log('Game manually started by player:', playerId);
         }
       }
 

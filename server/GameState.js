@@ -236,4 +236,23 @@ export class GameState {
       }
     });
   }
+
+  resetGame() {
+    console.log('Resetting game to WAITING state');
+    this.gameStatus = 'WAITING';
+    this.leftScore = 0;
+    this.rightScore = 0;
+    this.balls = [];
+
+    // Reset all player goals
+    this.players.forEach(player => {
+      player.goals = 0;
+    });
+
+    // Clear game loop if running
+    if (this.tickInterval) {
+      clearInterval(this.tickInterval);
+      this.tickInterval = null;
+    }
+  }
 }

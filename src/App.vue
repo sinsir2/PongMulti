@@ -11,6 +11,8 @@
       v-if="gameState === 'WAITING'"
       :players="players"
       :canStart="canStart"
+      @startGame="handleStartGame"
+      @goBack="handleGoBack"
     />
 
     <div v-if="gameState === 'PLAYING' || gameState === 'ENDED'">
@@ -22,6 +24,7 @@
         :gameStatus="gameState"
         :targetScore="targetScore"
         :myPlayerId="myPlayerId"
+        @restart="handleRestart"
       />
 
       <Scoreboard
@@ -57,7 +60,9 @@ export default {
       leftScore: 0,
       rightScore: 0,
       targetScore: 10,
-      ws: null
+      ws: null,
+      savedName: '',
+      savedColor: '#ffffff'
     };
   },
   computed: {
@@ -69,6 +74,10 @@ export default {
   },
   methods: {
     handleJoin({ name, color }) {
+      // Save credentials for restart
+      this.savedName = name;
+      this.savedColor = color;
+
       this.ws = new WebSocketService('ws://localhost:3001');
 
       this.ws.on('init', (data) => {
@@ -98,6 +107,47 @@ export default {
 
       this.ws.send('join', { name, color });
       this.gameState = 'WAITING';
+    },
+
+    handleStartGame() {
+      // Send startGame message to server
+      this.ws.send('startGame', {});
+    },
+
+    handleGoBack() {
+      // Disconnect from server
+      if (this.ws && this.ws.ws) {
+        this.ws.ws.close();
+      }
+
+      // Reset to login state
+      this.gameState = 'LOGIN';
+      this.players = [];
+      this.balls = [];
+      this.leftScore = 0;
+      this.rightScore = 0;
+      this.ws = null;
+      this.myPlayerId = null;
+    },
+
+    handleRestart() {
+      // Disconnect from current game
+      if (this.ws && this.ws.ws) {
+        this.ws.ws.close();
+      }
+
+      // Reset state
+      this.players = [];
+      this.balls = [];
+      this.leftScore = 0;
+      this.rightScore = 0;
+      this.myPlayerId = null;
+
+      // Rejoin with saved credentials
+      this.handleJoin({
+        name: this.savedName,
+        color: this.savedColor
+      });
     },
 
     updateState(state) {

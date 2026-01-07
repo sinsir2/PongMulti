@@ -12,7 +12,9 @@
     <div v-if="gameStatus === 'ENDED'" class="game-over">
       <h3>Game Over!</h3>
       <p class="final-score">{{ leftScore }} : {{ rightScore }}</p>
-      <p class="reload-message">Refresh the page to play again</p>
+      <button @click="$emit('restart')" class="restart-button">
+        Play Again
+      </button>
     </div>
   </div>
 </template>
@@ -184,9 +186,19 @@ canvas {
   font-weight: bold;
 }
 
-.reload-message {
-  font-size: 14px;
-  color: #aaa;
+.restart-button {
   margin-top: 20px;
+  padding: 12px 30px;
+  font-size: 16px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.restart-button:hover {
+  background: #45a049;
 }
 </style>

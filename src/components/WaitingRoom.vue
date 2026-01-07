@@ -2,7 +2,7 @@
   <div class="waiting-room">
     <h3>Waiting Room</h3>
     <p v-if="!canStart" class="status-message">Waiting for players on both sides...</p>
-    <p v-else class="status-message ready">Ready to start! Waiting for more players or game start...</p>
+    <p v-else class="status-message ready">Ready to start!</p>
 
     <div class="teams">
       <div class="team">
@@ -30,6 +30,22 @@
           </li>
         </ul>
       </div>
+    </div>
+
+    <div class="actions">
+      <button
+        @click="$emit('startGame')"
+        :disabled="!canStart"
+        class="start-button"
+      >
+        Start Game
+      </button>
+      <button
+        @click="$emit('goBack')"
+        class="back-button"
+      >
+        Go Back
+      </button>
     </div>
   </div>
 </template>
@@ -106,5 +122,47 @@ h3 {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 3px;
   font-weight: bold;
+}
+
+.actions {
+  margin-top: 30px;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.start-button {
+  padding: 12px 30px;
+  font-size: 16px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.start-button:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.start-button:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.back-button {
+  padding: 12px 30px;
+  font-size: 16px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.back-button:hover {
+  background: #da190b;
 }
 </style>
