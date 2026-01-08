@@ -29,14 +29,17 @@ export default {
     rightScore: Number,
     gameStatus: String,
     targetScore: Number,
-    myPlayerId: String
+    myPlayerId: String,
+    serverCanvasWidth: Number,
+    serverCanvasHeight: Number
   },
   data() {
     return {
       canvas: null,
       ctx: null,
       currentInput: 'stop',
-      containerWidth: 0
+      viewportWidth: 0,
+      viewportHeight: 0
     };
   },
   computed: {
@@ -44,27 +47,27 @@ export default {
       return this.players.length;
     },
     canvasWidth() {
-      const BASE_WIDTH = 600;
-      if (this.playerCount <= 3) {
-        return BASE_WIDTH;
-      } else if (this.playerCount >= 8) {
-        return this.containerWidth || BASE_WIDTH;
+      // Calculate display width to fill viewport
+      const serverAspect = (this.serverCanvasWidth || 600) / (this.serverCanvasHeight || 400);
+      const viewportAspect = this.viewportWidth / this.viewportHeight;
+
+      if (viewportAspect > serverAspect) {
+        // Fit to height
+        return Math.floor(this.viewportHeight * 0.85 * serverAspect);
       } else {
-        // Linear interpolation for players 4-7
-        const scaleFactor = (this.playerCount - 3) / 5; // 0 to 1
-        const maxWidth = this.containerWidth || BASE_WIDTH;
-        return Math.floor(BASE_WIDTH + (maxWidth - BASE_WIDTH) * scaleFactor);
+        // Fit to width
+        return Math.floor(this.viewportWidth * 0.98);
       }
     },
     canvasHeight() {
-      const ASPECT_RATIO = 1.5; // 600:400 = 3:2 = 1.5
-      return Math.floor(this.canvasWidth / ASPECT_RATIO);
+      const serverAspect = (this.serverCanvasWidth || 600) / (this.serverCanvasHeight || 400);
+      return Math.floor(this.canvasWidth / serverAspect);
     },
     scaleX() {
-      return this.canvasWidth / 600;
+      return this.canvasWidth / (this.serverCanvasWidth || 600);
     },
     scaleY() {
-      return this.canvasHeight / 400;
+      return this.canvasHeight / (this.serverCanvasHeight || 400);
     }
   },
   mounted() {
@@ -97,8 +100,8 @@ export default {
     },
 
     updateContainerWidth() {
-      const container = this.$refs.canvas.parentElement;
-      this.containerWidth = container.clientWidth;
+      this.viewportWidth = window.innerWidth;
+      this.viewportHeight = window.innerHeight;
     },
 
     handleKeyDown(event) {
@@ -222,20 +225,27 @@ export default {
 
 <style scoped>
 .game-canvas-container {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-  max-width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  z-index: 1;
+  overflow: hidden;
 }
 
 canvas {
-  border: 2px solid #333;
+  border: none;
   background: black;
   outline: none;
   display: block;
-  margin: 0 auto;
-  max-width: 100%;
-  height: auto;
+  max-width: 100vw;
+  max-height: 100vh;
+  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .game-over {

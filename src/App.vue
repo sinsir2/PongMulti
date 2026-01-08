@@ -24,6 +24,8 @@
         :gameStatus="gameState"
         :targetScore="targetScore"
         :myPlayerId="myPlayerId"
+        :serverCanvasWidth="serverCanvasWidth"
+        :serverCanvasHeight="serverCanvasHeight"
         @restart="handleRestart"
       />
 
@@ -62,7 +64,9 @@ export default {
       targetScore: 10,
       ws: null,
       savedName: '',
-      savedColor: '#ffffff'
+      savedColor: '#ffffff',
+      serverCanvasWidth: 600,
+      serverCanvasHeight: 400
     };
   },
   computed: {
@@ -157,6 +161,10 @@ export default {
       this.rightScore = state.rightScore;
       this.targetScore = state.targetScore;
 
+      // Capture server canvas dimensions
+      if (state.canvasWidth) this.serverCanvasWidth = state.canvasWidth;
+      if (state.canvasHeight) this.serverCanvasHeight = state.canvasHeight;
+
       if (state.gameStatus === 'PLAYING') {
         this.gameState = 'PLAYING';
       } else if (state.gameStatus === 'ENDED') {
@@ -180,5 +188,27 @@ h2 {
   margin-bottom: 30px;
   font-size: 36px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+</style>
+
+<style>
+/* Global scrollbar hiding */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 </style>

@@ -13,11 +13,15 @@ export class Player {
     this.paddle = new Paddle(0, 0, color);
   }
 
-  updatePosition() {
+  updatePosition(canvasHeight = CANVAS_HEIGHT, paddleHeight = PADDLE_HEIGHT) {
+    // Scale paddle speed based on canvas height to maintain consistent feel
+    const heightScale = canvasHeight / CANVAS_HEIGHT;
+    const scaledSpeed = PADDLE_SPEED * heightScale;
+
     if (this.input === 'up') {
-      this.paddle.y = Math.max(0, this.paddle.y - PADDLE_SPEED);
+      this.paddle.y = Math.max(0, this.paddle.y - scaledSpeed);
     } else if (this.input === 'down') {
-      this.paddle.y = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, this.paddle.y + PADDLE_SPEED);
+      this.paddle.y = Math.min(canvasHeight - paddleHeight, this.paddle.y + scaledSpeed);
     }
   }
 
