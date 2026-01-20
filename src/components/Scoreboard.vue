@@ -1,7 +1,7 @@
 <template>
   <div class="scoreboard-container" :class="{ collapsed: isCollapsed }">
     <!-- Toggle Button -->
-    <button class="toggle-btn" @click="isCollapsed = !isCollapsed">
+    <button class="toggle-btn" @click="handleToggle">
       <span class="toggle-icon">{{ isCollapsed ? "◀" : "▶" }}</span>
       <span v-if="isCollapsed" class="toggle-label">Stats</span>
     </button>
@@ -99,13 +99,16 @@ export default {
     players: Array,
     leftScore: Number,
     rightScore: Number,
+    collapsed: {
+      type: Boolean,
+      default: true,
+    },
   },
-  data() {
-    return {
-      isCollapsed: false,
-    };
-  },
+  emits: ["toggle"],
   computed: {
+    isCollapsed() {
+      return this.collapsed;
+    },
     leftPlayers() {
       return this.players.filter((p) => p.side === "left");
     },
@@ -120,6 +123,9 @@ export default {
   methods: {
     getGoalPercentage(goals) {
       return (goals / this.maxGoals) * 100;
+    },
+    handleToggle() {
+      this.$emit("toggle");
     },
   },
 };

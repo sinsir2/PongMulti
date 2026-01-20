@@ -101,6 +101,10 @@ export default {
     serverCanvasWidth: Number,
     serverCanvasHeight: Number,
     winner: String,
+    sidebarCollapsed: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
@@ -120,16 +124,20 @@ export default {
     },
     canvasWidth() {
       // Calculate display width to fill viewport
+      // Leave room for sidebar if expanded
+      const sidebarWidth = this.sidebarCollapsed ? 50 : 320;
+      const availableWidth = this.viewportWidth - sidebarWidth;
+
       const serverAspect =
         (this.serverCanvasWidth || 600) / (this.serverCanvasHeight || 400);
-      const viewportAspect = this.viewportWidth / this.viewportHeight;
+      const viewportAspect = availableWidth / this.viewportHeight;
 
       if (viewportAspect > serverAspect) {
         // Fit to height
         return Math.floor(this.viewportHeight * 0.9 * serverAspect);
       } else {
         // Fit to width
-        return Math.floor(this.viewportWidth * 0.98);
+        return Math.floor(availableWidth * 0.95);
       }
     },
     canvasHeight() {

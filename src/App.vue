@@ -4,6 +4,16 @@
     <div class="background-grid"></div>
     <div class="background-glow"></div>
 
+    <!-- Global Fullscreen Button (on non-game screens) -->
+    <button
+      v-if="gameState !== 'PLAYING' && gameState !== 'ENDED'"
+      class="global-fullscreen-btn"
+      @click="toggleFullscreen"
+      :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'"
+    >
+      ⛶
+    </button>
+
     <!-- Main Content -->
     <div class="app-content">
       <!-- Header (only show when not in game) -->
@@ -53,12 +63,15 @@
           :serverCanvasWidth="serverCanvasWidth"
           :serverCanvasHeight="serverCanvasHeight"
           :winner="winner"
+          :sidebarCollapsed="sidebarCollapsed"
         />
 
         <Scoreboard
           :players="players"
           :leftScore="leftScore"
           :rightScore="rightScore"
+          :collapsed="sidebarCollapsed"
+          @toggle="sidebarCollapsed = !sidebarCollapsed"
         />
       </div>
     </div>
@@ -96,6 +109,8 @@ export default {
       serverCanvasHeight: 400,
       winner: null, // Track winning side for game end display
       lastGameResults: null, // Store previous game results
+      isFullscreen: false,
+      sidebarCollapsed: true, // Start collapsed on small screens
     };
   },
   computed: {
@@ -105,7 +120,35 @@ export default {
       return leftCount > 0 && rightCount > 0;
     },
   },
+  mounted() {
+    document.addEventListener("fullscreenchange", this.handleFullscreenChange);
+    // Auto-expand sidebar on larger screens
+    if (window.innerWidth > 1400) {
+      this.sidebarCollapsed = false;
+    }
+  },
+  beforeUnmount() {
+    document.removeEventListener(
+      "fullscreenchange",
+      this.handleFullscreenChange,
+    );
+  },
   methods: {
+    toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.log("Error entering fullscreen:", err);
+        });
+      } else {
+        document.exitFullscreen().catch((err) => {
+          console.log("Error exiting fullscreen:", err);
+        });
+      }
+    },
+
+    handleFullscreenChange() {
+      this.isFullscreen = !!document.fullscreenElement;
+    },
     handleJoin({ name, color }) {
       // Save credentials for restart
       this.savedName = name;
@@ -214,6 +257,34 @@ export default {
   min-height: 100vh;
   width: 100%;
   overflow: hidden;
+}
+
+/* Global Fullscreen Button */
+.global-fullscreen-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 100;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.global-fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: scale(1.05);
 }
 
 /* Animated Background */
