@@ -1,108 +1,151 @@
-# Multiplayer Pong
+# 🏓 Multiplayer Pong
 
-A real-time multiplayer Pong game built with Vue 3, Vite, and WebSockets. Players can join teams, control individual paddles, and compete against each other with dynamic ball scaling based on player count.
+A modern, real-time multiplayer Pong game with a sleek arcade-style UI. Play with friends in your browser!
 
-## Features
+![Multiplayer Pong](https://img.shields.io/badge/Game-Multiplayer%20Pong-00f5ff?style=for-the-badge)
+![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=for-the-badge&logo=vue.js)
+![WebSocket](https://img.shields.io/badge/WebSocket-Real--time-ff00ff?style=for-the-badge)
 
-- **Multiplayer Gameplay**: Multiple players can join and play simultaneously
-- **Team Balancing**: Players are automatically assigned to left or right teams to maintain balance
-- **Dynamic Ball Scaling**: Ball count increases with player count (formula: `floor(playerCount / 2) - 1`, minimum 1)
-- **Individual Scoring**: Track each player's goals while competing as teams
-- **Real-time Synchronization**: Server-authoritative game logic ensures fair gameplay
-- **Custom Player Colors**: Each player can choose their paddle color
+## ✨ Features
 
-## Game Rules
+- **Real-time Multiplayer** - Play with multiple players on each side
+- **Dynamic Teams** - Automatic team balancing
+- **Responsive Design** - Optimized for desktop/laptop displays
+- **Modern UI** - Glassmorphism effects, animations, and neon accents
+- **Live Stats** - Track individual goals and team scores
+- **Custom Colors** - Choose your paddle color
 
-- **Minimum Players**: 2 players (one on each side) to start
-- **Ball Count**:
-  - 2-4 players: 1 ball
-  - 6 players: 2 balls
-  - 8 players: 3 balls
-- **Win Condition**: First team to reach `ballCount * 10` points wins
-- **Controls**: Arrow Up/Down keys to move your paddle
+## 🚀 Quick Start
 
-## Project Setup
+### Development
 
-### Install Dependencies
-
-```sh
-# Install client dependencies
+```bash
+# Install frontend dependencies
 npm install
 
-# Install server dependencies
-cd server
-npm install
-cd ..
-```
+# Install backend dependencies
+cd server && npm install && cd ..
 
-### Running the Game
+# Start the WebSocket server (terminal 1)
+cd server && npm start
 
-You need to run both the WebSocket server and the client:
-
-#### Option 1: Run in Separate Terminals
-
-**Terminal 1 - Start WebSocket Server:**
-```sh
-cd server
-npm start
-```
-
-**Terminal 2 - Start Vite Dev Server:**
-```sh
+# Start the frontend dev server (terminal 2)
 npm run dev
 ```
 
-#### Option 2: Manual Commands
+Open `http://localhost:5173` in your browser.
 
-```sh
-# Terminal 1: WebSocket Server
-node server/server.js
+### Production with Docker
 
-# Terminal 2: Client
-npm run dev
+```bash
+# Build and start all containers
+docker compose up -d --build
+
+# View logs
+docker compose logs -f
 ```
 
-### Testing Multiplayer Locally
+The app will be available on port `3000`.
 
-1. Start both the server and client
-2. Open `http://localhost:5173` in multiple browser tabs/windows
-3. Enter different names and colors for each player
-4. Join the game - players will be automatically balanced between teams
-5. Once you have at least one player on each side, the game starts!
+## 🐳 Docker Deployment
 
-## Ports
+This project is designed for deployment with **Dockge** and **Nginx Proxy Manager**.
 
-- **WebSocket Server**: Port 3001
-- **Vite Dev Server**: Port 5173
+### Architecture
 
-## Architecture
-
-- **Server-Authoritative**: All game logic, physics, and collision detection runs on the server
-- **Client Rendering**: Clients only render game state and send input
-- **WebSocket Communication**: Real-time bidirectional communication between server and clients
-- **Single Game Room**: All players join one global game instance
-
-## Development
-
-### Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-### Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-### Build for Production
-
-```sh
-npm run build
+```
+┌─────────────────────────────────────────────────────┐
+│                 Nginx Proxy Manager                  │
+│              (Your existing setup)                   │
+└─────────────────────┬───────────────────────────────┘
+                      │ Routes to port 3000
+┌─────────────────────▼───────────────────────────────┐
+│              pong-proxy (nginx:alpine)              │
+│                    Port 3000                         │
+├─────────────────────┬───────────────────────────────┤
+│         /ws         │            /*                  │
+│    WebSocket        │        Static Files            │
+└──────────┬──────────┴──────────────┬────────────────┘
+           │                         │
+┌──────────▼──────────┐  ┌───────────▼────────────────┐
+│    pong-backend     │  │      pong-frontend         │
+│   (Node.js:3001)    │  │     (nginx:80)             │
+│   WebSocket Server  │  │   Vue.js Static Files      │
+└─────────────────────┘  └────────────────────────────┘
 ```
 
-## Customize Configuration
+### Setup with Dockge
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+1. **Clone/Upload the project** to your server
+2. **Create a new stack** in Dockge
+3. **Copy the docker-compose.yml** content
+4. **Deploy the stack**
+
+### Nginx Proxy Manager Configuration
+
+Create a new Proxy Host:
+
+| Setting             | Value                         |
+| ------------------- | ----------------------------- |
+| Domain              | `pong.yourdomain.com`         |
+| Scheme              | `http`                        |
+| Forward Hostname/IP | `pong-proxy` (container name) |
+| Forward Port        | `3000`                        |
+| Websockets Support  | ✅ **Enabled**                |
+
+> ⚠️ **Important**: Enable "Websockets Support" for real-time gameplay!
+
+If using SSL:
+
+- Enable "Force SSL"
+- Request a new SSL certificate
+
+### Environment Variables
+
+No environment variables required! The app automatically detects:
+
+- Development mode: Connects to `ws://localhost:3001`
+- Production mode: Connects to `wss://yourdomain.com/ws`
+
+## 🎮 How to Play
+
+1. **Enter your name** and choose a paddle color
+2. **Wait for players** on both teams (at least 1 per side)
+3. **Start the game** when ready
+4. **Use Arrow Keys** (↑ ↓) to move your paddle
+5. **Score goals** by getting the ball past the opponent
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Vue.js 3, Vite
+- **Backend**: Node.js, WebSocket (ws)
+- **Styling**: Custom CSS with CSS Variables
+- **Fonts**: Orbitron, Inter (Google Fonts)
+- **Deployment**: Docker, Nginx
+
+## 📁 Project Structure
+
+```
+PongMulti/
+├── src/                    # Vue.js frontend
+│   ├── components/         # Vue components
+│   ├── services/           # WebSocket service
+│   ├── styles.css          # Global styles
+│   ├── App.vue             # Main app component
+│   └── main.js             # Entry point
+├── server/                 # Node.js backend
+│   ├── server.js           # WebSocket server
+│   ├── GameState.js        # Game logic
+│   ├── Ball.js             # Ball physics
+│   ├── Paddle.js           # Paddle logic
+│   └── Player.js           # Player management
+├── docker-compose.yml      # Docker orchestration
+├── Dockerfile.frontend     # Frontend container
+├── Dockerfile.backend      # Backend container
+├── nginx-proxy.conf        # Internal proxy config
+└── nginx.conf              # Frontend static server
+```
+
+## 📄 License
+
+MIT License - feel free to use and modify!

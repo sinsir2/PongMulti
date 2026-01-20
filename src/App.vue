@@ -111,7 +111,7 @@ export default {
       this.savedName = name;
       this.savedColor = color;
 
-      this.ws = new WebSocketService("ws://localhost:3001");
+      this.ws = new WebSocketService(this.getWebSocketUrl());
 
       this.ws.on("init", (data) => {
         this.myPlayerId = data.playerId;
@@ -190,6 +190,19 @@ export default {
       } else if (state.gameStatus === "ENDED") {
         this.gameState = "ENDED";
       }
+    },
+
+    getWebSocketUrl() {
+      // In development, use localhost
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      ) {
+        return "ws://localhost:3001";
+      }
+      // In production, use the same host with WebSocket protocol
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      return `${protocol}//${window.location.host}/ws`;
     },
   },
 };
