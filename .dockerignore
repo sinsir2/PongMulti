@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+server/node_modules
+
+# Build output
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dev files
+.claude
+.gemini
+*.md
+!README.md
