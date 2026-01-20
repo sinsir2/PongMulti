@@ -29,6 +29,16 @@
         </div>
       </div>
 
+      <!-- Fullscreen Toggle Button -->
+      <button
+        class="fullscreen-btn"
+        @click="toggleFullscreen"
+        :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'"
+      >
+        <span v-if="!isFullscreen">⛶</span>
+        <span v-else>⛶</span>
+      </button>
+
       <!-- Controls Hint (fades out after first input) -->
       <div v-if="showControlsHint" class="controls-hint">
         <kbd>W</kbd> <kbd>S</kbd> or <kbd>↑</kbd> <kbd>↓</kbd> to move
@@ -101,6 +111,7 @@ export default {
       viewportHeight: 0,
       showControlsHint: true,
       gridPattern: null,
+      isFullscreen: false,
     };
   },
   computed: {
@@ -152,6 +163,9 @@ export default {
     this.updateContainerWidth();
     window.addEventListener("resize", this.updateContainerWidth);
 
+    // Listen for fullscreen changes
+    document.addEventListener("fullscreenchange", this.handleFullscreenChange);
+
     // Create grid pattern
     this.createGridPattern();
 
@@ -165,6 +179,10 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener("resize", this.updateContainerWidth);
+    document.removeEventListener(
+      "fullscreenchange",
+      this.handleFullscreenChange,
+    );
   },
   methods: {
     focusCanvas() {
@@ -176,6 +194,28 @@ export default {
     updateContainerWidth() {
       this.viewportWidth = window.innerWidth;
       this.viewportHeight = window.innerHeight;
+    },
+
+    toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        // Enter fullscreen
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.log("Error entering fullscreen:", err);
+        });
+      } else {
+        // Exit fullscreen
+        document.exitFullscreen().catch((err) => {
+          console.log("Error exiting fullscreen:", err);
+        });
+      }
+    },
+
+    handleFullscreenChange() {
+      this.isFullscreen = !!document.fullscreenElement;
+      // Update viewport after fullscreen change
+      this.$nextTick(() => {
+        this.updateContainerWidth();
+      });
     },
 
     createGridPattern() {
@@ -463,6 +503,34 @@ canvas {
   font-size: 12px;
   color: var(--text-secondary);
   letter-spacing: 0.05em;
+}
+
+/* Fullscreen Button */
+.fullscreen-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: scale(1.05);
 }
 
 /* Controls Hint */

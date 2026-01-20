@@ -221,7 +221,8 @@ export default {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--space-md);
+  padding-bottom: var(--space-lg);
 }
 
 /* Connection Status */
@@ -254,7 +255,7 @@ export default {
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-xl);
+  padding: var(--space-md);
   text-align: center;
   animation: scaleIn 0.5s ease-out;
 }
@@ -278,13 +279,13 @@ export default {
 }
 
 .trophy {
-  font-size: 36px;
+  font-size: 28px;
   animation: float 2s ease-in-out infinite;
 }
 
 .results-header h3 {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 18px;
   color: var(--text-primary);
   margin: 0;
 }
@@ -299,7 +300,7 @@ export default {
 
 .score {
   font-family: var(--font-display);
-  font-size: 48px;
+  font-size: 32px;
   font-weight: 700;
 }
 
@@ -359,12 +360,12 @@ export default {
 
 .waiting-icon,
 .ready-icon {
-  font-size: 32px;
+  font-size: 24px;
 }
 
 .status-waiting p,
 .status-ready p {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-secondary);
   margin: 0;
 }
@@ -374,15 +375,15 @@ export default {
 }
 
 .status-ready .ready-icon {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   background: var(--success);
   color: var(--bg-deep);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 18px;
   animation: pulseGlow 2s ease-in-out infinite;
   box-shadow: 0 0 20px var(--success);
 }
@@ -417,7 +418,7 @@ export default {
 .teams-container {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: var(--space-xl);
+  gap: var(--space-md);
   align-items: start;
 }
 
@@ -426,8 +427,8 @@ export default {
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  min-height: 200px;
+  padding: var(--space-md);
+  min-height: 100px;
 }
 
 .left-team {
@@ -442,8 +443,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-sm);
   border-bottom: 1px solid var(--glass-border);
 }
 
