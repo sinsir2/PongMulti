@@ -31,7 +31,7 @@
 
       <!-- Controls Hint (fades out after first input) -->
       <div v-if="showControlsHint" class="controls-hint">
-        <kbd>↑</kbd> <kbd>↓</kbd> to move your paddle
+        <kbd>W</kbd> <kbd>S</kbd> or <kbd>↑</kbd> <kbd>↓</kbd> to move
       </div>
     </div>
 
@@ -206,10 +206,14 @@ export default {
     handleKeyDown(event) {
       let newInput = null;
 
-      if (event.key === "ArrowUp") {
+      if (event.key === "ArrowUp" || event.key === "w" || event.key === "W") {
         newInput = "up";
         event.preventDefault();
-      } else if (event.key === "ArrowDown") {
+      } else if (
+        event.key === "ArrowDown" ||
+        event.key === "s" ||
+        event.key === "S"
+      ) {
         newInput = "down";
         event.preventDefault();
       }
@@ -222,7 +226,15 @@ export default {
     },
 
     handleKeyUp(event) {
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      const key = event.key;
+      if (
+        key === "ArrowUp" ||
+        key === "ArrowDown" ||
+        key === "w" ||
+        key === "W" ||
+        key === "s" ||
+        key === "S"
+      ) {
         this.currentInput = "stop";
         this.$parent.ws.send("input", { direction: "stop" });
         event.preventDefault();
