@@ -7,11 +7,7 @@ services:
     container_name: pong-frontend
     restart: unless-stopped
     networks:
-      - pong-network
-    depends_on:
-      - backend
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      - internal
 
   # Backend - WebSocket Server
   backend:
@@ -21,12 +17,10 @@ services:
     container_name: pong-backend
     restart: unless-stopped
     networks:
-      - pong-network
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      - internal
 
   # Nginx Reverse Proxy - Routes traffic to frontend and backend
-  nginx:
+  proxy:
     image: nginx:alpine
     container_name: pong-proxy
     restart: unless-stopped
@@ -35,13 +29,14 @@ services:
     volumes:
       - ./nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
-      - pong-network
+      - internal
+      - public_net
     depends_on:
       - frontend
       - backend
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
 
 networks:
-  pong-network:
+  internal:
     driver: bridge
+  public_net:
+    external: true
