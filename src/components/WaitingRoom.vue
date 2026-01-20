@@ -1,293 +1,657 @@
 <template>
   <div class="waiting-room">
-    <h3>Waiting Room</h3>
-    <p v-if="!canStart" class="status-message">Waiting for players on both sides...</p>
-    <p v-else class="status-message ready">Ready to start!</p>
+    <!-- Connection Status -->
+    <div class="connection-status">
+      <span class="status-dot"></span>
+      <span class="status-text">Connected</span>
+    </div>
 
-    <!-- Last Game Results Section -->
-    <div v-if="lastGameResults" class="last-game-results">
-      <h4>Last Game Results</h4>
-      <div class="winner-banner" :class="lastGameResults.winner + '-side'">
+    <!-- Last Game Results Banner -->
+    <div
+      v-if="lastGameResults"
+      class="results-banner"
+      :class="lastGameResults.winner + '-winner'"
+    >
+      <div class="results-header">
         <span class="trophy">🏆</span>
-        {{ lastGameResults.winner === 'left' ? 'Left Side' : 'Right Side' }} Wins!
+        <h3>
+          {{
+            lastGameResults.winner === "left" ? "Left Team" : "Right Team"
+          }}
+          Wins!
+        </h3>
       </div>
-      <div class="final-scores">
-        <span class="score">{{ lastGameResults.leftScore }}</span>
-        <span class="separator">:</span>
-        <span class="score">{{ lastGameResults.rightScore }}</span>
+
+      <div class="results-score">
+        <span class="score left">{{ lastGameResults.leftScore }}</span>
+        <span class="score-divider">—</span>
+        <span class="score right">{{ lastGameResults.rightScore }}</span>
       </div>
-      <div v-if="topScorers.length > 0" class="top-scorers">
-        <h5>Top Scorers</h5>
-        <div v-for="(player, index) in topScorers" :key="player.id" class="scorer">
-          <span class="rank">{{ index + 1 }}.</span>
-          <span class="name" :style="{ color: player.color }">{{ player.name }}</span>
-          <span class="goals">{{ player.goals }} goals</span>
+
+      <div v-if="mvp" class="mvp-section">
+        <span class="mvp-badge">⭐ MVP</span>
+        <span class="mvp-name" :style="{ color: mvp.color }">{{
+          mvp.name
+        }}</span>
+        <span class="mvp-goals">{{ mvp.goals }} goals</span>
+      </div>
+    </div>
+
+    <!-- Status Message -->
+    <div class="status-section">
+      <div v-if="!canStart" class="status-waiting">
+        <div class="waiting-icon">⏳</div>
+        <p>Waiting for players on both sides...</p>
+        <div class="waiting-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div v-else class="status-ready">
+        <div class="ready-icon">✓</div>
+        <p>Ready to play!</p>
+      </div>
+    </div>
+
+    <!-- Teams Container -->
+    <div class="teams-container">
+      <!-- Left Team -->
+      <div class="team-card left-team">
+        <div class="team-header">
+          <h4>Left Team</h4>
+          <span class="player-count"
+            >{{ leftPlayers.length }}
+            {{ leftPlayers.length === 1 ? "Player" : "Players" }}</span
+          >
+        </div>
+
+        <div class="players-list">
+          <TransitionGroup name="player">
+            <div
+              v-for="player in leftPlayers"
+              :key="player.id"
+              class="player-card"
+            >
+              <div class="player-avatar" :style="{ background: player.color }">
+                {{ getInitials(player.name) }}
+              </div>
+              <span class="player-name">{{ player.name }}</span>
+              <div
+                class="player-paddle"
+                :style="{ background: player.color }"
+              ></div>
+            </div>
+          </TransitionGroup>
+
+          <div v-if="leftPlayers.length === 0" class="empty-team">
+            <span class="empty-icon">👤</span>
+            <span class="empty-text">Waiting for players...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- VS Divider -->
+      <div class="vs-divider">
+        <span class="vs-text">VS</span>
+      </div>
+
+      <!-- Right Team -->
+      <div class="team-card right-team">
+        <div class="team-header">
+          <h4>Right Team</h4>
+          <span class="player-count"
+            >{{ rightPlayers.length }}
+            {{ rightPlayers.length === 1 ? "Player" : "Players" }}</span
+          >
+        </div>
+
+        <div class="players-list">
+          <TransitionGroup name="player">
+            <div
+              v-for="player in rightPlayers"
+              :key="player.id"
+              class="player-card"
+            >
+              <div class="player-avatar" :style="{ background: player.color }">
+                {{ getInitials(player.name) }}
+              </div>
+              <span class="player-name">{{ player.name }}</span>
+              <div
+                class="player-paddle"
+                :style="{ background: player.color }"
+              ></div>
+            </div>
+          </TransitionGroup>
+
+          <div v-if="rightPlayers.length === 0" class="empty-team">
+            <span class="empty-icon">👤</span>
+            <span class="empty-text">Waiting for players...</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="teams">
-      <div class="team">
-        <h4>Left Side ({{ leftPlayers.length }})</h4>
-        <ul>
-          <li
-            v-for="player in leftPlayers"
-            :key="player.id"
-            :style="{ color: player.color }"
-          >
-            {{ player.name }}
-          </li>
-        </ul>
-      </div>
-
-      <div class="team">
-        <h4>Right Side ({{ rightPlayers.length }})</h4>
-        <ul>
-          <li
-            v-for="player in rightPlayers"
-            :key="player.id"
-            :style="{ color: player.color }"
-          >
-            {{ player.name }}
-          </li>
-        </ul>
-      </div>
-    </div>
-
+    <!-- Action Buttons -->
     <div class="actions">
       <button
         @click="$emit('startGame')"
         :disabled="!canStart"
-        class="start-button"
+        class="btn-start"
       >
-        Start Game
+        <span class="btn-icon">🎮</span>
+        <span>Start Game</span>
       </button>
-      <button
-        @click="$emit('goBack')"
-        class="back-button"
-      >
-        Go Back
+
+      <button @click="$emit('goBack')" class="btn-back">
+        <span class="btn-icon">←</span>
+        <span>Leave</span>
       </button>
+    </div>
+
+    <!-- Game Info -->
+    <div class="game-info">
+      <div class="info-item">
+        <span class="info-icon">🎯</span>
+        <span class="info-text"
+          >First to
+          <strong>{{
+            Math.max(1, Math.floor(players.length / 2) - 1) * 10
+          }}</strong>
+          wins</span
+        >
+      </div>
+      <div class="info-item">
+        <span class="info-icon">🎱</span>
+        <span class="info-text"
+          ><strong>{{
+            Math.max(1, Math.floor(players.length / 2) - 1)
+          }}</strong>
+          {{
+            Math.max(1, Math.floor(players.length / 2) - 1) === 1
+              ? "ball"
+              : "balls"
+          }}</span
+        >
+      </div>
+      <div class="info-item">
+        <span class="info-icon">⌨️</span>
+        <span class="info-text">Use <kbd>↑</kbd> <kbd>↓</kbd> to move</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'WaitingRoom',
+  name: "WaitingRoom",
   props: {
     players: Array,
     canStart: Boolean,
-    lastGameResults: Object
+    lastGameResults: Object,
   },
   computed: {
     leftPlayers() {
-      return this.players.filter(p => p.side === 'left');
+      return this.players.filter((p) => p.side === "left");
     },
     rightPlayers() {
-      return this.players.filter(p => p.side === 'right');
+      return this.players.filter((p) => p.side === "right");
     },
-    topScorers() {
-      if (!this.lastGameResults) return [];
+    mvp() {
+      if (!this.lastGameResults || !this.lastGameResults.players) return null;
 
-      // Sort by goals descending, take top 3
-      return this.lastGameResults.players
-        .sort((a, b) => b.goals - a.goals)
-        .slice(0, 3)
-        .filter(p => p.goals > 0);  // Only show players who scored
-    }
-  }
+      const sorted = [...this.lastGameResults.players]
+        .filter((p) => p.goals > 0)
+        .sort((a, b) => b.goals - a.goals);
+
+      return sorted[0] || null;
+    },
+  },
+  methods: {
+    getInitials(name) {
+      return name
+        .split(" ")
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    },
+  },
 };
 </script>
 
 <style scoped>
 .waiting-room {
-  text-align: center;
-  padding: 20px;
-  color: #fff;
-}
-
-h3 {
-  margin-bottom: 20px;
-}
-
-.status-message {
-  font-size: 18px;
-  margin-bottom: 30px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 5px;
-}
-
-.status-message.ready {
-  background: rgba(76, 175, 80, 0.2);
-  border: 2px solid #4CAF50;
-}
-
-.teams {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
   display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-top: 30px;
+  flex-direction: column;
+  gap: var(--space-xl);
 }
 
-.team {
-  flex: 1;
-  max-width: 200px;
-}
-
-.team h4 {
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #444;
-}
-
-.team ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.team li {
-  padding: 8px;
-  margin: 5px 0;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-  font-weight: bold;
-}
-
-.actions {
-  margin-top: 30px;
+/* Connection Status */
+.connection-status {
   display: flex;
-  gap: 15px;
+  align-items: center;
+  gap: var(--space-sm);
   justify-content: center;
 }
 
-.start-button {
-  padding: 12px 30px;
-  font-size: 16px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 10px var(--success);
+  animation: pulse 2s ease-in-out infinite;
 }
 
-.start-button:hover:not(:disabled) {
-  background: #45a049;
+.status-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-.start-button:disabled {
-  background: #666;
-  cursor: not-allowed;
-}
-
-.back-button {
-  padding: 12px 30px;
-  font-size: 16px;
-  background: #f44336;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.back-button:hover {
-  background: #da190b;
-}
-
-.last-game-results {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 30px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.last-game-results h4 {
-  color: #fff;
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 20px;
-}
-
-.winner-banner {
-  font-size: 24px;
-  font-weight: bold;
-  padding: 15px;
-  border-radius: 8px;
-  margin: 10px 0;
+/* Results Banner */
+.results-banner {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
   text-align: center;
+  animation: scaleIn 0.5s ease-out;
 }
 
-.winner-banner.left-side {
-  background: linear-gradient(135deg, #4caf50, #66bb6a);
-  color: white;
+.results-banner.left-winner {
+  border-color: var(--success);
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
 }
 
-.winner-banner.right-side {
-  background: linear-gradient(135deg, #2196f3, #42a5f5);
-  color: white;
+.results-banner.right-winner {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 30px rgba(0, 245, 255, 0.2);
+}
+
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
 }
 
 .trophy {
-  font-size: 32px;
-  margin-right: 10px;
-}
-
-.final-scores {
   font-size: 36px;
-  font-weight: bold;
-  text-align: center;
-  margin: 15px 0;
-  color: white;
+  animation: float 2s ease-in-out infinite;
 }
 
-.final-scores .score {
-  color: white;
+.results-header h3 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--text-primary);
+  margin: 0;
 }
 
-.final-scores .separator {
-  margin: 0 20px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.top-scorers {
-  margin-top: 20px;
-}
-
-.top-scorers h5 {
-  color: white;
-  margin-bottom: 10px;
-  font-size: 18px;
-  margin-top: 0;
-}
-
-.scorer {
+.results-score {
   display: flex;
   align-items: center;
-  padding: 8px;
-  margin: 5px 0;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 5px;
+  justify-content: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
-.scorer .rank {
-  font-weight: bold;
-  margin-right: 10px;
-  color: #ffd700;
-  min-width: 25px;
+.score {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
 }
 
-.scorer .name {
-  flex: 1;
-  font-weight: bold;
+.score.left {
+  color: var(--success);
 }
 
-.scorer .goals {
-  color: rgba(255, 255, 255, 0.7);
+.score.right {
+  color: var(--accent-primary);
+}
+
+.score-divider {
+  color: var(--text-muted);
+  font-size: 32px;
+}
+
+.mvp-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--glass-border);
+}
+
+.mvp-badge {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: var(--bg-deep);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mvp-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.mvp-goals {
+  color: var(--text-secondary);
   font-size: 14px;
+}
+
+/* Status Section */
+.status-section {
+  text-align: center;
+}
+
+.status-waiting,
+.status-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.waiting-icon,
+.ready-icon {
+  font-size: 32px;
+}
+
+.status-waiting p,
+.status-ready p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.status-ready {
+  color: var(--success);
+}
+
+.status-ready .ready-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--success);
+  color: var(--bg-deep);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  animation: pulseGlow 2s ease-in-out infinite;
+  box-shadow: 0 0 20px var(--success);
+}
+
+.status-ready p {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.waiting-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.waiting-dots span {
+  width: 8px;
+  height: 8px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.waiting-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.waiting-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Teams Container */
+.teams-container {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.team-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  min-height: 200px;
+}
+
+.left-team {
+  border-left: 3px solid var(--success);
+}
+
+.right-team {
+  border-right: 3px solid var(--accent-primary);
+}
+
+.team-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.team-header h4 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.left-team .team-header h4 {
+  color: var(--success);
+}
+
+.right-team .team-header h4 {
+  color: var(--accent-primary);
+}
+
+.player-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+}
+
+.player-card:hover {
+  background: rgba(0, 0, 0, 0.3);
+  transform: translateX(4px);
+}
+
+.player-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bg-deep);
+  flex-shrink: 0;
+}
+
+.player-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.player-paddle {
+  width: 6px;
+  height: 24px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.empty-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  color: var(--text-muted);
+  gap: var(--space-sm);
+}
+
+.empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 14px;
+}
+
+/* Player Transition */
+.player-enter-active {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.player-leave-active {
+  animation: fadeInUp 0.3s ease-out reverse;
+}
+
+/* VS Divider */
+.vs-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl) 0;
+}
+
+.vs-text {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-muted);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+.btn-start,
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-xl);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.btn-start {
+  background: linear-gradient(135deg, var(--success), #00cc6a);
+  color: var(--bg-deep);
+  box-shadow: var(--glow-success);
+}
+
+.btn-start:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+}
+
+.btn-start:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-back {
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+}
+
+.btn-back:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-icon {
+  font-size: 18px;
+}
+
+/* Game Info */
+.game-info {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-xl);
+  padding: var(--space-lg);
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.info-icon {
+  font-size: 16px;
+}
+
+.info-text strong {
+  color: var(--accent-primary);
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  margin: 0 2px;
 }
 </style>

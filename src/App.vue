@@ -1,62 +1,88 @@
 <template>
-  <div class="pong-container">
-    <h2>Multiplayer Pong</h2>
+  <div class="pong-app">
+    <!-- Animated Background Grid -->
+    <div class="background-grid"></div>
+    <div class="background-glow"></div>
 
-    <LoginScreen
-      v-if="gameState === 'LOGIN'"
-      @join="handleJoin"
-    />
+    <!-- Main Content -->
+    <div class="app-content">
+      <!-- Header (only show when not in game) -->
+      <header
+        v-if="gameState !== 'PLAYING' && gameState !== 'ENDED'"
+        class="app-header"
+      >
+        <div class="logo-section">
+          <div class="logo-icon">🏓</div>
+          <h1 class="logo-title">PONG</h1>
+          <span class="logo-subtitle">MULTIPLAYER</span>
+        </div>
+        <p class="tagline">Challenge your friends in real-time</p>
+      </header>
 
-    <WaitingRoom
-      v-if="gameState === 'WAITING'"
-      :players="players"
-      :canStart="canStart"
-      :lastGameResults="lastGameResults"
-      @startGame="handleStartGame"
-      @goBack="handleGoBack"
-    />
-
-    <div v-if="gameState === 'PLAYING' || gameState === 'ENDED'">
-      <GameCanvas
-        :players="players"
-        :balls="balls"
-        :leftScore="leftScore"
-        :rightScore="rightScore"
-        :gameStatus="gameState"
-        :targetScore="targetScore"
-        :myPlayerId="myPlayerId"
-        :serverCanvasWidth="serverCanvasWidth"
-        :serverCanvasHeight="serverCanvasHeight"
-        :winner="winner"
+      <!-- Login Screen -->
+      <LoginScreen
+        v-if="gameState === 'LOGIN'"
+        @join="handleJoin"
+        class="fade-in-up"
       />
 
-      <Scoreboard
+      <!-- Waiting Room -->
+      <WaitingRoom
+        v-if="gameState === 'WAITING'"
         :players="players"
-        :leftScore="leftScore"
-        :rightScore="rightScore"
+        :canStart="canStart"
+        :lastGameResults="lastGameResults"
+        @startGame="handleStartGame"
+        @goBack="handleGoBack"
+        class="fade-in-up"
       />
+
+      <!-- Game Screen -->
+      <div
+        v-if="gameState === 'PLAYING' || gameState === 'ENDED'"
+        class="game-screen"
+      >
+        <GameCanvas
+          :players="players"
+          :balls="balls"
+          :leftScore="leftScore"
+          :rightScore="rightScore"
+          :gameStatus="gameState"
+          :targetScore="targetScore"
+          :myPlayerId="myPlayerId"
+          :serverCanvasWidth="serverCanvasWidth"
+          :serverCanvasHeight="serverCanvasHeight"
+          :winner="winner"
+        />
+
+        <Scoreboard
+          :players="players"
+          :leftScore="leftScore"
+          :rightScore="rightScore"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import LoginScreen from './components/LoginScreen.vue';
-import WaitingRoom from './components/WaitingRoom.vue';
-import GameCanvas from './components/GameCanvas.vue';
-import Scoreboard from './components/Scoreboard.vue';
-import WebSocketService from './services/websocket.js';
+import LoginScreen from "./components/LoginScreen.vue";
+import WaitingRoom from "./components/WaitingRoom.vue";
+import GameCanvas from "./components/GameCanvas.vue";
+import Scoreboard from "./components/Scoreboard.vue";
+import WebSocketService from "./services/websocket.js";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
     LoginScreen,
     WaitingRoom,
     GameCanvas,
-    Scoreboard
+    Scoreboard,
   },
   data() {
     return {
-      gameState: 'LOGIN', // LOGIN, WAITING, PLAYING, ENDED
+      gameState: "LOGIN", // LOGIN, WAITING, PLAYING, ENDED
       myPlayerId: null,
       players: [],
       balls: [],
@@ -64,20 +90,20 @@ export default {
       rightScore: 0,
       targetScore: 10,
       ws: null,
-      savedName: '',
-      savedColor: '#ffffff',
+      savedName: "",
+      savedColor: "#ffffff",
       serverCanvasWidth: 600,
       serverCanvasHeight: 400,
-      winner: null,  // Track winning side for game end display
-      lastGameResults: null  // Store previous game results
+      winner: null, // Track winning side for game end display
+      lastGameResults: null, // Store previous game results
     };
   },
   computed: {
     canStart() {
-      const leftCount = this.players.filter(p => p.side === 'left').length;
-      const rightCount = this.players.filter(p => p.side === 'right').length;
+      const leftCount = this.players.filter((p) => p.side === "left").length;
+      const rightCount = this.players.filter((p) => p.side === "right").length;
       return leftCount > 0 && rightCount > 0;
-    }
+    },
   },
   methods: {
     handleJoin({ name, color }) {
@@ -85,46 +111,46 @@ export default {
       this.savedName = name;
       this.savedColor = color;
 
-      this.ws = new WebSocketService('ws://localhost:3001');
+      this.ws = new WebSocketService("ws://localhost:3001");
 
-      this.ws.on('init', (data) => {
+      this.ws.on("init", (data) => {
         this.myPlayerId = data.playerId;
         this.updateState(data.gameState);
       });
 
-      this.ws.on('state', (data) => {
+      this.ws.on("state", (data) => {
         this.updateState(data);
       });
 
-      this.ws.on('playerJoined', (data) => {
+      this.ws.on("playerJoined", (data) => {
         this.players.push(data.player);
       });
 
-      this.ws.on('playerLeft', (data) => {
-        this.players = this.players.filter(p => p.id !== data.playerId);
+      this.ws.on("playerLeft", (data) => {
+        this.players = this.players.filter((p) => p.id !== data.playerId);
       });
 
-      this.ws.on('gameStarted', () => {
-        this.gameState = 'PLAYING';
+      this.ws.on("gameStarted", () => {
+        this.gameState = "PLAYING";
       });
 
-      this.ws.on('gameEnded', (data) => {
-        this.gameState = 'ENDED';
-        this.winner = data.winner;  // Store winner for display
+      this.ws.on("gameEnded", (data) => {
+        this.gameState = "ENDED";
+        this.winner = data.winner; // Store winner for display
 
         // Auto-transition to waiting room after brief display
         setTimeout(() => {
-          this.gameState = 'WAITING';
+          this.gameState = "WAITING";
         }, 3000);
       });
 
-      this.ws.send('join', { name, color });
-      this.gameState = 'WAITING';
+      this.ws.send("join", { name, color });
+      this.gameState = "WAITING";
     },
 
     handleStartGame() {
       // Send startGame message to server
-      this.ws.send('startGame', {});
+      this.ws.send("startGame", {});
     },
 
     handleGoBack() {
@@ -134,7 +160,7 @@ export default {
       }
 
       // Reset to login state
-      this.gameState = 'LOGIN';
+      this.gameState = "LOGIN";
       this.players = [];
       this.balls = [];
       this.leftScore = 0;
@@ -159,50 +185,151 @@ export default {
         this.lastGameResults = state.lastGameResults;
       }
 
-      if (state.gameStatus === 'PLAYING') {
-        this.gameState = 'PLAYING';
-      } else if (state.gameStatus === 'ENDED') {
-        this.gameState = 'ENDED';
+      if (state.gameStatus === "PLAYING") {
+        this.gameState = "PLAYING";
+      } else if (state.gameStatus === "ENDED") {
+        this.gameState = "ENDED";
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-.pong-container {
-  text-align: center;
-  padding: 20px;
+.pong-app {
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-}
-
-h2 {
-  color: #fff;
-  margin-bottom: 30px;
-  font-size: 36px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-</style>
-
-<style>
-/* Global scrollbar hiding */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
   width: 100%;
-  height: 100%;
+  overflow: hidden;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-*::-webkit-scrollbar {
-  display: none;
+/* Animated Background */
+.background-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridPulse 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-* {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.background-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(
+      ellipse at 20% 20%,
+      rgba(123, 47, 255, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 80%,
+      rgba(0, 245, 255, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(255, 0, 255, 0.05) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      135deg,
+      var(--bg-dark) 0%,
+      var(--bg-mid) 50%,
+      var(--bg-accent) 100%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Main Content */
+.app-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: var(--space-xl);
+}
+
+/* Header */
+.app-header {
+  text-align: center;
+  margin-bottom: var(--space-2xl);
+  animation: fadeInDown 0.6s ease-out;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.logo-icon {
+  font-size: 48px;
+  animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.5));
+}
+
+.logo-title {
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 30px rgba(0, 245, 255, 0.3));
+}
+
+.logo-subtitle {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: var(--accent-secondary);
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--accent-secondary);
+  border-radius: var(--radius-sm);
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+.tagline {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+/* Game Screen Layout */
+.game-screen {
+  width: 100%;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* Animation Classes */
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
 }
 </style>
