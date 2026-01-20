@@ -11,10 +11,9 @@
 
     <div v-if="gameStatus === 'ENDED'" class="game-over">
       <h3>Game Over!</h3>
+      <p class="winner-announcement">{{ winnerText }} Wins!</p>
       <p class="final-score">{{ leftScore }} : {{ rightScore }}</p>
-      <button @click="$emit('restart')" class="restart-button">
-        Play Again
-      </button>
+      <p class="returning">Returning to lobby...</p>
     </div>
   </div>
 </template>
@@ -31,7 +30,8 @@ export default {
     targetScore: Number,
     myPlayerId: String,
     serverCanvasWidth: Number,
-    serverCanvasHeight: Number
+    serverCanvasHeight: Number,
+    winner: String
   },
   data() {
     return {
@@ -68,6 +68,9 @@ export default {
     },
     scaleY() {
       return this.canvasHeight / (this.serverCanvasHeight || 400);
+    },
+    winnerText() {
+      return this.winner === 'left' ? 'Left Team' : 'Right Team';
     }
   },
   mounted() {

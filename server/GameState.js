@@ -15,7 +15,9 @@ export class GameState {
     this.tickInterval = null;
     this.canvasWidth = CANVAS_WIDTH;
     this.canvasHeight = CANVAS_HEIGHT;
-    this.paddleHeight = PADDLE_HEIGHT;
+    this.leftPaddleHeight = PADDLE_HEIGHT;
+    this.rightPaddleHeight = PADDLE_HEIGHT;
+    this.lastGameResults = null;  // Store previous game results
   }
 
   assignSide() {
@@ -72,14 +74,17 @@ export class GameState {
     const index = playersOnSide.indexOf(player);
     const count = playersOnSide.length;
 
+    // Get paddle height for this side
+    const paddleHeight = side === 'left' ? this.leftPaddleHeight : this.rightPaddleHeight;
+
     // Stack paddles vertically
     const x = side === 'left' ? 0 : (this.canvasWidth - PADDLE_WIDTH);
     const spacing = this.canvasHeight / (count + 1);
-    const y = spacing * (index + 1) - this.paddleHeight / 2;
+    const y = spacing * (index + 1) - paddleHeight / 2;
 
     player.paddle.x = x;
     player.paddle.y = y;
-    player.paddle.height = this.paddleHeight; // Update paddle height dynamically
+    player.paddle.height = paddleHeight; // Update paddle height dynamically
   }
 
   repositionPaddles(side) {
@@ -94,7 +99,8 @@ export class GameState {
 
     this.canvasHeight = calculateCanvasHeight(leftCount, rightCount);
     this.canvasWidth = calculateCanvasWidth(totalCount);
-    this.paddleHeight = calculatePaddleHeight(leftCount, rightCount);
+    this.leftPaddleHeight = calculatePaddleHeight(leftCount);
+    this.rightPaddleHeight = calculatePaddleHeight(rightCount);
   }
 
   canStart() {
@@ -133,11 +139,13 @@ export class GameState {
   tick() {
     // Update all paddle positions based on input
     this.players.forEach(player => {
-      player.updatePosition(this.canvasHeight, PADDLE_HEIGHT);
+      const paddleHeight = player.side === 'left' ? this.leftPaddleHeight : this.rightPaddleHeight;
+      player.updatePosition(this.canvasHeight, paddleHeight);
     });
 
     // Update all balls
     this.balls.forEach(ball => {
+      ball.updateSpeed();  // Apply exponential speed increase
       ball.move();
 
       // Check wall collisions (top/bottom)
@@ -177,10 +185,10 @@ export class GameState {
     if (ball.vx < 0) { // Moving left
       for (const player of this.leftPlayers) {
         if (player.paddle.collidesWith(ball)) {
-          ball.vx *= -1;
+          ball.baseVx *= -1;  // Reverse base velocity
           // Add spin based on where ball hits paddle
           const hitOffset = ball.y - (player.paddle.y + player.paddle.height / 2);
-          ball.vy += hitOffset * 0.1;
+          ball.spinVy += hitOffset * 0.1;
           break;
         }
       }
@@ -190,9 +198,9 @@ export class GameState {
     if (ball.vx > 0) { // Moving right
       for (const player of this.rightPlayers) {
         if (player.paddle.collidesWith(ball)) {
-          ball.vx *= -1;
+          ball.baseVx *= -1;  // Reverse base velocity
           const hitOffset = ball.y - (player.paddle.y + player.paddle.height / 2);
-          ball.vy += hitOffset * 0.1;
+          ball.spinVy += hitOffset * 0.1;
           break;
         }
       }
@@ -234,7 +242,9 @@ export class GameState {
       targetScore: this.targetScore,
       canvasWidth: this.canvasWidth,
       canvasHeight: this.canvasHeight,
-      paddleHeight: this.paddleHeight
+      leftPaddleHeight: this.leftPaddleHeight,
+      rightPaddleHeight: this.rightPaddleHeight,
+      lastGameResults: this.lastGameResults
     };
   }
 
@@ -253,6 +263,22 @@ export class GameState {
     this.gameStatus = 'ENDED';
     clearInterval(this.tickInterval);
 
+    // Capture results before they're wiped by resetGame()
+    this.lastGameResults = {
+      winner: winningSide,
+      leftScore: this.leftScore,
+      rightScore: this.rightScore,
+      targetScore: this.targetScore,
+      timestamp: Date.now(),
+      players: Array.from(this.players.values()).map(p => ({
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        side: p.side,
+        goals: p.goals
+      }))
+    };
+
     this.broadcast();
     this.players.forEach(player => {
       if (player.ws.readyState === 1) { // WebSocket.OPEN
@@ -262,6 +288,14 @@ export class GameState {
         }));
       }
     });
+
+    // Auto-reset to waiting room after 3 seconds
+    setTimeout(() => {
+      if (this.gameStatus === 'ENDED') {  // Only if still in ended state
+        this.resetGame();
+        this.broadcast();  // Notify clients of WAITING state
+      }
+    }, 3000);
   }
 
   resetGame() {

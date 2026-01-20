@@ -18,11 +18,18 @@ export function calculateCanvasWidth(totalPlayers) {
   return CANVAS_WIDTH; // Keep width at 600 for now
 }
 
-export function calculatePaddleHeight(leftPlayerCount, rightPlayerCount) {
-  const maxPlayersOneSide = Math.max(leftPlayerCount, rightPlayerCount);
-  if (maxPlayersOneSide <= 2) return PADDLE_HEIGHT; // 80px base
+export function calculatePaddleHeight(playerCount) {
+  // Fixed paddle heights for each team size (1v1, 2v2, 3v3, etc.)
+  const heightMap = {
+    1: 80,
+    2: 70,
+    3: 60,
+    4: 50,
+    5: 45,
+    6: 40,
+    7: 35
+  };
 
-  // Decrease by 10px per player beyond 2, minimum 30px
-  const decrease = (maxPlayersOneSide - 2) * 10;
-  return Math.max(30, PADDLE_HEIGHT - decrease);
+  // Default to 30px for 8+ players per side
+  return heightMap[playerCount] || 30;
 }

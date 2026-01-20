@@ -11,6 +11,7 @@
       v-if="gameState === 'WAITING'"
       :players="players"
       :canStart="canStart"
+      :lastGameResults="lastGameResults"
       @startGame="handleStartGame"
       @goBack="handleGoBack"
     />
@@ -26,7 +27,7 @@
         :myPlayerId="myPlayerId"
         :serverCanvasWidth="serverCanvasWidth"
         :serverCanvasHeight="serverCanvasHeight"
-        @restart="handleRestart"
+        :winner="winner"
       />
 
       <Scoreboard
@@ -66,7 +67,9 @@ export default {
       savedName: '',
       savedColor: '#ffffff',
       serverCanvasWidth: 600,
-      serverCanvasHeight: 400
+      serverCanvasHeight: 400,
+      winner: null,  // Track winning side for game end display
+      lastGameResults: null  // Store previous game results
     };
   },
   computed: {
@@ -107,6 +110,12 @@ export default {
 
       this.ws.on('gameEnded', (data) => {
         this.gameState = 'ENDED';
+        this.winner = data.winner;  // Store winner for display
+
+        // Auto-transition to waiting room after brief display
+        setTimeout(() => {
+          this.gameState = 'WAITING';
+        }, 3000);
       });
 
       this.ws.send('join', { name, color });
@@ -134,26 +143,6 @@ export default {
       this.myPlayerId = null;
     },
 
-    handleRestart() {
-      // Disconnect from current game
-      if (this.ws && this.ws.ws) {
-        this.ws.ws.close();
-      }
-
-      // Reset state
-      this.players = [];
-      this.balls = [];
-      this.leftScore = 0;
-      this.rightScore = 0;
-      this.myPlayerId = null;
-
-      // Rejoin with saved credentials
-      this.handleJoin({
-        name: this.savedName,
-        color: this.savedColor
-      });
-    },
-
     updateState(state) {
       this.players = state.players;
       this.balls = state.balls;
@@ -164,6 +153,11 @@ export default {
       // Capture server canvas dimensions
       if (state.canvasWidth) this.serverCanvasWidth = state.canvasWidth;
       if (state.canvasHeight) this.serverCanvasHeight = state.canvasHeight;
+
+      // Receive last game results from server
+      if (state.lastGameResults) {
+        this.lastGameResults = state.lastGameResults;
+      }
 
       if (state.gameStatus === 'PLAYING') {
         this.gameState = 'PLAYING';
