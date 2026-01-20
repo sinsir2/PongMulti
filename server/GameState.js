@@ -1,6 +1,6 @@
 import { Player } from './Player.js';
 import { Ball } from './Ball.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, PADDLE_HEIGHT, PADDLE_WIDTH, TICK_RATE } from './config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, PADDLE_HEIGHT, PADDLE_WIDTH, TICK_RATE, calculateCanvasHeight, calculateCanvasWidth, calculatePaddleHeight } from './config.js';
 
 export class GameState {
   constructor() {
@@ -13,6 +13,9 @@ export class GameState {
     this.targetScore = 10;
     this.gameStatus = 'WAITING'; // WAITING, PLAYING, ENDED
     this.tickInterval = null;
+    this.canvasWidth = CANVAS_WIDTH;
+    this.canvasHeight = CANVAS_HEIGHT;
+    this.paddleHeight = PADDLE_HEIGHT;
   }
 
   assignSide() {
@@ -30,8 +33,15 @@ export class GameState {
       this.rightPlayers.push(player);
     }
 
+    // Recalculate canvas dimensions based on new player count
+    this.updateCanvasDimensions();
+
     // Position paddle on their side
     this.positionPaddle(player);
+
+    // Reposition all paddles with new dimensions
+    this.repositionPaddles('left');
+    this.repositionPaddles('right');
 
     return player;
   }
@@ -49,6 +59,9 @@ export class GameState {
 
     this.players.delete(id);
 
+    // Recalculate canvas dimensions
+    this.updateCanvasDimensions();
+
     // Reposition remaining paddles
     this.repositionPaddles(player.side);
   }
@@ -60,17 +73,28 @@ export class GameState {
     const count = playersOnSide.length;
 
     // Stack paddles vertically
-    const x = side === 'left' ? 0 : (CANVAS_WIDTH - PADDLE_WIDTH);
-    const spacing = CANVAS_HEIGHT / (count + 1);
-    const y = spacing * (index + 1) - PADDLE_HEIGHT / 2;
+    const x = side === 'left' ? 0 : (this.canvasWidth - PADDLE_WIDTH);
+    const spacing = this.canvasHeight / (count + 1);
+    const y = spacing * (index + 1) - this.paddleHeight / 2;
 
     player.paddle.x = x;
     player.paddle.y = y;
+    player.paddle.height = this.paddleHeight; // Update paddle height dynamically
   }
 
   repositionPaddles(side) {
     const players = side === 'left' ? this.leftPlayers : this.rightPlayers;
     players.forEach(player => this.positionPaddle(player));
+  }
+
+  updateCanvasDimensions() {
+    const leftCount = this.leftPlayers.length;
+    const rightCount = this.rightPlayers.length;
+    const totalCount = this.players.size;
+
+    this.canvasHeight = calculateCanvasHeight(leftCount, rightCount);
+    this.canvasWidth = calculateCanvasWidth(totalCount);
+    this.paddleHeight = calculatePaddleHeight(leftCount, rightCount);
   }
 
   canStart() {
@@ -109,7 +133,7 @@ export class GameState {
   tick() {
     // Update all paddle positions based on input
     this.players.forEach(player => {
-      player.updatePosition();
+      player.updatePosition(this.canvasHeight, PADDLE_HEIGHT);
     });
 
     // Update all balls
@@ -117,7 +141,7 @@ export class GameState {
       ball.move();
 
       // Check wall collisions (top/bottom)
-      ball.checkWallCollision();
+      ball.checkWallCollision(this.canvasHeight);
 
       // Check paddle collisions
       this.checkPaddleCollisions(ball);
@@ -126,17 +150,17 @@ export class GameState {
       if (ball.x < 0) {
         this.rightScore++;
         this.scoreBy(this.rightPlayers, ball);
-        ball.reset();
+        ball.reset(this.canvasWidth, this.canvasHeight);
 
         if (this.rightScore >= this.targetScore) {
           this.endGame('right');
         }
       }
 
-      if (ball.x > CANVAS_WIDTH) {
+      if (ball.x > this.canvasWidth) {
         this.leftScore++;
         this.scoreBy(this.leftPlayers, ball);
-        ball.reset();
+        ball.reset(this.canvasWidth, this.canvasHeight);
 
         if (this.leftScore >= this.targetScore) {
           this.endGame('left');
@@ -207,7 +231,10 @@ export class GameState {
       leftScore: this.leftScore,
       rightScore: this.rightScore,
       gameStatus: this.gameStatus,
-      targetScore: this.targetScore
+      targetScore: this.targetScore,
+      canvasWidth: this.canvasWidth,
+      canvasHeight: this.canvasHeight,
+      paddleHeight: this.paddleHeight
     };
   }
 

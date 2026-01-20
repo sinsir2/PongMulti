@@ -11,11 +11,14 @@ export class Ball {
     }
   }
 
-  reset() {
-    this.x = CANVAS_WIDTH / 2;
-    this.y = CANVAS_HEIGHT / 2;
-    this.vx = Math.random() > 0.5 ? 4 : -4;
-    this.vy = (Math.random() - 0.5) * 6;
+  reset(canvasWidth = CANVAS_WIDTH, canvasHeight = CANVAS_HEIGHT) {
+    this.x = canvasWidth / 2;
+    this.y = canvasHeight / 2;
+
+    // Scale velocities based on canvas height to maintain consistent feel
+    const heightScale = canvasHeight / CANVAS_HEIGHT;
+    this.vx = (Math.random() > 0.5 ? 4 : -4) * heightScale;
+    this.vy = (Math.random() - 0.5) * 6 * heightScale;
   }
 
   move() {
@@ -23,8 +26,8 @@ export class Ball {
     this.y += this.vy;
   }
 
-  checkWallCollision() {
-    if (this.y < this.radius || this.y > CANVAS_HEIGHT - this.radius) {
+  checkWallCollision(canvasHeight = CANVAS_HEIGHT) {
+    if (this.y < this.radius || this.y > canvasHeight - this.radius) {
       this.vy *= -1;
     }
   }

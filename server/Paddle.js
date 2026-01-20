@@ -1,11 +1,11 @@
 import { PADDLE_WIDTH, PADDLE_HEIGHT } from './config.js';
 
 export class Paddle {
-  constructor(x, y, color) {
+  constructor(x, y, color, height = PADDLE_HEIGHT) {
     this.x = x;
     this.y = y;
     this.width = PADDLE_WIDTH;
-    this.height = PADDLE_HEIGHT;
+    this.height = height;
     this.color = color;
   }
 
