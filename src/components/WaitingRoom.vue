@@ -15,9 +15,7 @@
       <div class="results-header">
         <span class="trophy">🏆</span>
         <h3>
-          {{
-            lastGameResults.winner === "left" ? "Left Team" : "Right Team"
-          }}
+          {{ lastGameResults.winner === "left" ? "Left Team" : "Right Team" }}
           Wins!
         </h3>
       </div>
@@ -653,5 +651,146 @@ kbd {
   border: 1px solid var(--glass-border);
   border-radius: 4px;
   margin: 0 2px;
+}
+
+/* Responsive styles for smaller screens */
+@media (max-height: 800px) {
+  .waiting-room {
+    gap: var(--space-md);
+  }
+
+  .results-banner {
+    padding: var(--space-md);
+  }
+
+  .trophy {
+    font-size: 28px;
+  }
+
+  .results-header h3 {
+    font-size: 18px;
+  }
+
+  .score {
+    font-size: 36px;
+  }
+
+  .score-divider {
+    font-size: 24px;
+  }
+
+  .status-section {
+    padding: var(--space-sm) 0;
+  }
+
+  .waiting-icon,
+  .ready-icon {
+    font-size: 24px;
+  }
+
+  .status-ready .ready-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .team-card {
+    padding: var(--space-md);
+    min-height: 120px;
+  }
+
+  .team-header {
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-sm);
+  }
+
+  .player-card {
+    padding: var(--space-sm);
+  }
+
+  .player-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+
+  .empty-team {
+    padding: var(--space-md);
+  }
+
+  .empty-icon {
+    font-size: 24px;
+  }
+
+  .actions {
+    margin: var(--space-sm) 0;
+  }
+
+  .btn-start,
+  .btn-back {
+    padding: var(--space-sm) var(--space-lg);
+    font-size: 12px;
+  }
+
+  .game-info {
+    gap: var(--space-md);
+    padding: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .info-item {
+    font-size: 12px;
+  }
+}
+
+@media (max-height: 700px) {
+  .waiting-room {
+    gap: var(--space-sm);
+  }
+
+  .results-banner {
+    padding: var(--space-sm);
+  }
+
+  .results-header {
+    margin-bottom: var(--space-sm);
+  }
+
+  .results-score {
+    margin-bottom: var(--space-sm);
+  }
+
+  .score {
+    font-size: 28px;
+  }
+
+  .mvp-section {
+    padding-top: var(--space-sm);
+  }
+
+  .teams-container {
+    gap: var(--space-md);
+  }
+
+  .team-card {
+    min-height: 80px;
+  }
+}
+
+/* For narrower screens */
+@media (max-width: 700px) {
+  .teams-container {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .vs-divider {
+    padding: var(--space-sm) 0;
+  }
+
+  .game-info {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
 }
 </style>

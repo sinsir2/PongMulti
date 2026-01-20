@@ -272,13 +272,15 @@ export default {
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  padding: var(--space-xl);
+  padding: var(--space-md);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Header */
 .app-header {
   text-align: center;
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-lg);
   animation: fadeInDown 0.6s ease-out;
 }
 
@@ -286,19 +288,19 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-md);
-  margin-bottom: var(--space-sm);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
 }
 
 .logo-icon {
-  font-size: 48px;
+  font-size: 36px;
   animation: float 3s ease-in-out infinite;
   filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.5));
 }
 
 .logo-title {
   font-family: var(--font-display);
-  font-size: 64px;
+  font-size: 48px;
   font-weight: 900;
   letter-spacing: 0.1em;
   background: linear-gradient(
@@ -315,11 +317,11 @@ export default {
 
 .logo-subtitle {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.2em;
   color: var(--accent-secondary);
-  padding: var(--space-xs) var(--space-md);
+  padding: 2px var(--space-sm);
   border: 1px solid var(--accent-secondary);
   border-radius: var(--radius-sm);
   text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
@@ -327,7 +329,7 @@ export default {
 
 .tagline {
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-secondary);
   letter-spacing: 0.05em;
 }
