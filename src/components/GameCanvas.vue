@@ -309,13 +309,10 @@ export default {
         ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
       }
 
-      // Draw glowing center line
+      // Draw center line with glow
       const centerX = (this.serverCanvasWidth / 2) * scaleX;
-
-      // Glow effect
       ctx.shadowBlur = 20;
       ctx.shadowColor = "rgba(255, 0, 255, 0.5)";
-
       ctx.strokeStyle = "rgba(255, 0, 255, 0.3)";
       ctx.lineWidth = 2;
       ctx.setLineDash([15, 10]);
@@ -324,20 +321,21 @@ export default {
       ctx.lineTo(centerX, this.canvasHeight);
       ctx.stroke();
       ctx.setLineDash([]);
-
       ctx.shadowBlur = 0;
 
-      // Draw all paddles
-      this.players.forEach((player) => {
-        const isMyPaddle = player.id === this.myPlayerId;
+      // Cache font calculation (avoid recalculating per player)
+      const fontSize = Math.floor(11 * Math.min(scaleX, scaleY));
+      const fontString = `bold ${fontSize}px Inter, sans-serif`;
 
-        // Paddle glow
-        if (isMyPaddle) {
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = player.paddle.color;
+      // OPTIMIZATION: Draw all OTHER paddles first (no shadows)
+      let myPlayer = null;
+      this.players.forEach((player) => {
+        if (player.id === this.myPlayerId) {
+          myPlayer = player; // Save for later with glow
+          return;
         }
 
-        // Draw paddle
+        // Draw paddle without shadow
         ctx.fillStyle = player.paddle.color;
         ctx.beginPath();
         ctx.roundRect(
@@ -349,46 +347,72 @@ export default {
         );
         ctx.fill();
 
-        // Highlight own paddle with border
-        if (isMyPaddle) {
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-        }
-
         // Draw player name
-        ctx.fillStyle = player.paddle.color;
-        ctx.font = `bold ${Math.floor(11 * Math.min(scaleX, scaleY))}px Inter, sans-serif`;
+        ctx.font = fontString;
         ctx.textAlign = player.side === "left" ? "left" : "right";
-
         const nameX =
           player.side === "left"
             ? (player.paddle.x + player.paddle.width + 8) * scaleX
             : (player.paddle.x - 8) * scaleX;
         const nameY = (player.paddle.y + player.paddle.height / 2 + 4) * scaleY;
-
         ctx.fillText(player.name, nameX, nameY);
       });
 
-      // Draw all balls with glow
-      this.balls.forEach((ball) => {
+      // OPTIMIZATION: Now draw glowing elements together (own paddle + balls)
+      // Enable shadow once for all glowing elements
+      if (myPlayer) {
         ctx.shadowBlur = 15;
-        ctx.shadowColor = "#ffffff";
-
-        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = myPlayer.paddle.color;
+        ctx.fillStyle = myPlayer.paddle.color;
         ctx.beginPath();
-        ctx.arc(
-          ball.x * scaleX,
-          ball.y * scaleY,
-          ball.radius * Math.min(scaleX, scaleY),
-          0,
-          Math.PI * 2,
+        ctx.roundRect(
+          myPlayer.paddle.x * scaleX,
+          myPlayer.paddle.y * scaleY,
+          myPlayer.paddle.width * scaleX,
+          myPlayer.paddle.height * scaleY,
+          4,
         );
         ctx.fill();
 
+        // Border for own paddle
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw own player name
+        ctx.font = fontString;
+        ctx.textAlign = myPlayer.side === "left" ? "left" : "right";
+        const nameX =
+          myPlayer.side === "left"
+            ? (myPlayer.paddle.x + myPlayer.paddle.width + 8) * scaleX
+            : (myPlayer.paddle.x - 8) * scaleX;
+        const nameY =
+          (myPlayer.paddle.y + myPlayer.paddle.height / 2 + 4) * scaleY;
+        ctx.fillStyle = myPlayer.paddle.color;
+        ctx.shadowBlur = 0; // No shadow for text
+        ctx.fillText(myPlayer.name, nameX, nameY);
+      }
+
+      // Draw all balls with glow (batch shadow enable)
+      if (this.balls.length > 0) {
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ffffff";
+        ctx.fillStyle = "#ffffff";
+
+        this.balls.forEach((ball) => {
+          ctx.beginPath();
+          ctx.arc(
+            ball.x * scaleX,
+            ball.y * scaleY,
+            ball.radius * Math.min(scaleX, scaleY),
+            0,
+            Math.PI * 2,
+          );
+          ctx.fill();
+        });
+
         ctx.shadowBlur = 0;
-      });
+      }
     },
 
     getConfettiStyle(index) {
