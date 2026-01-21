@@ -18,6 +18,14 @@ export class GameState {
     this.leftPaddleHeight = PADDLE_HEIGHT;
     this.rightPaddleHeight = PADDLE_HEIGHT;
     this.lastGameResults = null;  // Store previous game results
+    
+    // Delta compression: track previous state to only send changes
+    this.previousState = {
+      balls: [],      // { x, y } for each ball
+      paddles: {},    // playerId -> { y }
+      leftScore: 0,
+      rightScore: 0
+    };
   }
 
   assignSide() {
@@ -176,8 +184,8 @@ export class GameState {
       }
     });
 
-    // Broadcast state to all clients
-    this.broadcast();
+    // Broadcast delta state to all clients (only changes)
+    this.broadcastDelta();
   }
 
   checkPaddleCollisions(ball) {
@@ -257,6 +265,80 @@ export class GameState {
         player.ws.send(message);
       }
     });
+    
+    // Update previous state after full broadcast
+    this.updatePreviousState();
+  }
+
+  // Delta compression: only send what changed since last tick
+  broadcastDelta() {
+    const delta = {
+      type: 'delta',
+      balls: [],
+      paddles: []
+    };
+    
+    let hasChanges = false;
+    
+    // Check ball position changes (use threshold to reduce noise)
+    const POSITION_THRESHOLD = 0.5;
+    this.balls.forEach((ball, index) => {
+      const prev = this.previousState.balls[index];
+      if (!prev || 
+          Math.abs(ball.x - prev.x) > POSITION_THRESHOLD || 
+          Math.abs(ball.y - prev.y) > POSITION_THRESHOLD) {
+        delta.balls.push({
+          i: index,  // Use short keys to reduce message size
+          x: Math.round(ball.x * 10) / 10,  // Round to 1 decimal
+          y: Math.round(ball.y * 10) / 10
+        });
+        hasChanges = true;
+      }
+    });
+    
+    // Check paddle position changes
+    this.players.forEach((player, playerId) => {
+      const prev = this.previousState.paddles[playerId];
+      const currentY = player.paddle.y;
+      if (!prev || Math.abs(currentY - prev.y) > POSITION_THRESHOLD) {
+        delta.paddles.push({
+          id: playerId,
+          y: Math.round(currentY * 10) / 10
+        });
+        hasChanges = true;
+      }
+    });
+    
+    // Check score changes - if score changed, send full state for reliability
+    if (this.leftScore !== this.previousState.leftScore || 
+        this.rightScore !== this.previousState.rightScore) {
+      this.broadcast();  // Full state on score change
+      return;
+    }
+    
+    // Only send if there are changes
+    if (hasChanges) {
+      const message = JSON.stringify(delta);
+      this.players.forEach(player => {
+        if (player.ws.readyState === 1) {
+          player.ws.send(message);
+        }
+      });
+    }
+    
+    // Update previous state
+    this.updatePreviousState();
+  }
+  
+  // Update previous state tracking
+  updatePreviousState() {
+    this.previousState.balls = this.balls.map(b => ({ x: b.x, y: b.y }));
+    this.previousState.paddles = {};
+    this.players.forEach((player, id) => {
+      this.previousState.paddles[id] = { y: player.paddle.y };
+    });
+    this.previousState.leftScore = this.leftScore;
+    this.previousState.rightScore = this.rightScore;
   }
 
   endGame(winningSide) {

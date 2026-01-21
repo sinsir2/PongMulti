@@ -165,6 +165,11 @@ export default {
         this.updateState(data);
       });
 
+      // Handle delta updates (optimized for performance)
+      this.ws.on("delta", (data) => {
+        this.applyDelta(data);
+      });
+
       this.ws.on("playerJoined", (data) => {
         this.players.push(data.player);
       });
@@ -232,6 +237,30 @@ export default {
         this.gameState = "PLAYING";
       } else if (state.gameStatus === "ENDED") {
         this.gameState = "ENDED";
+      }
+    },
+
+    // Apply delta updates in-place (optimized for performance)
+    applyDelta(delta) {
+      // Update ball positions in-place
+      if (delta.balls && delta.balls.length > 0) {
+        delta.balls.forEach((ballUpdate) => {
+          const ball = this.balls[ballUpdate.i];
+          if (ball) {
+            ball.x = ballUpdate.x;
+            ball.y = ballUpdate.y;
+          }
+        });
+      }
+
+      // Update paddle positions in-place
+      if (delta.paddles && delta.paddles.length > 0) {
+        delta.paddles.forEach((paddleUpdate) => {
+          const player = this.players.find((p) => p.id === paddleUpdate.id);
+          if (player && player.paddle) {
+            player.paddle.y = paddleUpdate.y;
+          }
+        });
       }
     },
 
