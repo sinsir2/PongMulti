@@ -25,7 +25,7 @@ services:
     container_name: pong-proxy
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "6767:6767"
     volumes:
       - ./nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
